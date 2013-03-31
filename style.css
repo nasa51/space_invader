@@ -13,20 +13,34 @@ body {
     background: #000;
 }
 
+#start {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 9999;
+  text-indent: -9999px;
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: #000 url(images/start.jpg) center center no-repeat;
+}
+
+#start.gameover {
+  background: #000 url(images/gameover.jpg) center center no-repeat;
+}
+
 #ship {
-    width: 30px;
-    height: 30px;
+    width: 34px;
+    height: 21px;
     position: absolute;
-    background: #fff;
-    border: 1px solid #ccc;
+    background: transparent url(images/ship.png) center center no-repeat;
 }
 
 .bug {
     width: 30px;
-    height: 30px;
+    height: 22px;
     position: absolute;
-    background: #fff;
-    border: 1px solid #ccc;
+    background: transparent url(images/invader_30.gif) center center no-repeat;
 }
 
 .bugs_map {

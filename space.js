@@ -1,15 +1,15 @@
-var direction  = 1;
 var bugs_map   = new Array();
 var bugs       = new Array();
-var total_bugs = 50;
-var bugsY      = 40;
-var bugsX      = 100;
-var game       = false;
-var bugsSpeedX = 1000/($('#screen').width()*0.05);
-var bugsSpeedY = 1000/($('#screen').width()*0.005);
-var checkInt;
 var ship;
 var shell;
+var total_bugs = 40;
+var bugsY      = 40;
+var bugsX      = 100;
+var bugsMargin = 30;
+var level      = 1;
+var bugsSpeedX = 1000/($('#screen').width()*0.05);
+var bugsSpeedY = 1000/($('#screen').height()*0.005);
+var shellSpeed = 1000/($('#screen').height()*1);
 
 // Object
 function Unit(name, x, y, speedX, speedY) {
@@ -18,7 +18,8 @@ function Unit(name, x, y, speedX, speedY) {
     this.x = x;
     this.y = y;
     this.speedX = speedX;
-    this.speedy = speedY;
+    this.speedY = speedY;
+    this.destroyed = false;
     this.stoped = true;
 
 
@@ -41,13 +42,26 @@ function Unit(name, x, y, speedX, speedY) {
         return $('#' + this.name).position().top;
     }
 
+    this.moveLeft = function() {
+    }
+
+    this.moveRight = function() {
+    }
+
+    this.moveUp = function() {
+    }
+
+    this.moveDown = function() {
+    }
+
     this.stop = function () {
-        this.stoped = true;
+        this.stoped  = true;
         $('#' + this.name).stop();
     }
 
     this.destroy = function() {
         this.stop();
+        this.destroyed = true;
         $('#' + this.name).remove();
     }
 }
@@ -63,7 +77,7 @@ function BugsMap(name, x, y, speedX, speedY, bugs) {
     this.direction = 1;
 
     this.add();
-    this.width = 0;
+    this.width = -1 * bugsMargin;
 
     $('#' + this.name).addClass('bugs_map');
 
@@ -73,13 +87,17 @@ function BugsMap(name, x, y, speedX, speedY, bugs) {
         this.stoped = false;
         $('#'+ this.name).animate({
             left: '0px'
-        },
-        speedX * $('#' + this.name).position().left,
-        'linear',
-        function(){
-            unit.stop();
-            unit.moveRight();
-            unit.moveDown();
+        }, {
+            duration: this.speedX * $('#' + this.name).position().left,
+            easing: 'linear',
+            step: function(currentLeft) {
+                unit.check();
+            },
+            complete: function() {
+                $(this).stop();
+                bugs_map[unit.name.replace('bugs_map','') - 1].moveRight();
+                bugs_map[unit.name.replace('bugs_map','') - 1].moveDown();
+            }
         });
     }
 
@@ -89,13 +107,17 @@ function BugsMap(name, x, y, speedX, speedY, bugs) {
         this.stoped = false;
         $('#'+ this.name).animate({
             left: $('#screen').width() - this.width + 'px'
-        },
-        speedX * ($('#screen').width() - $('#' + this.name).position().left - this.width),
-        'linear',
-        function(){
-            unit.stop();
-            unit.moveLeft();
-            unit.moveDown();
+        }, {
+            duration: this.speedX * ($('#screen').width() - $('#' + this.name).position().left - this.width),
+            easing: 'linear',
+            step: function(currentLeft) {
+                unit.check();
+            },
+            complete: function() {
+                $(this).stop();
+                bugs_map[unit.name.replace('bugs_map','') - 1].moveLeft();
+                bugs_map[unit.name.replace('bugs_map','') - 1].moveDown();
+            }
         });
     }
 
@@ -104,9 +126,40 @@ function BugsMap(name, x, y, speedX, speedY, bugs) {
         var unit = this;
         $('#'+ this.name).animate({
             top: $('#screen').height()
-        },
-        speedY * ($('#screen').height() - $('#' + this.name).position().top - this.height),
-        'linear');
+        }, {
+            duration: this.speedY * ($('#screen').height() - $('#' + this.name).position().top - this.height),
+            easing: 'linear',
+            step: function(currentLeft) {
+                unit.check();
+            }
+        });
+    }
+
+    this.check = function() {
+        $('#ship').each(function(){
+            // Ship left top edge
+            var target1 = $(document.elementFromPoint($(this).offset().left + 1, $(this).offset().top - 1));
+            // Ship left bottom edge
+            var target2 = $(document.elementFromPoint($(this).offset().left + 1, $(this).offset().top + $(this).height() - 1));
+            // Ship right bottom edge
+            var target3 = $(document.elementFromPoint($(this).offset().left + $(this).width() - 1, $(this).offset().top + $(this).height() - 1));
+            // Ship right top edge
+            var target4 = $(document.elementFromPoint($(this).offset().left + $(this).width() - 1, $(this).offset().top + 1));
+            if (target1.attr('class') == 'bug' ||
+                target2.attr('class') == 'bug' ||
+                target3.attr('class') == 'bug' ||
+                target4.attr('class') == 'bug'
+            ) {
+                gameOver();
+            }
+        });
+
+        // Проигрыш - противник достиг нижнего края
+        $('.bugs_map').each(function(){
+            if($(this).position().top == $('#screen').height()) {
+                gameOver();
+            }
+        });
     }
 }
 BugsMap.prototype = new Unit();
@@ -126,7 +179,7 @@ function Bug(name) {
             this.x =
                 $('#bugs_map'+ this.parentId +' .bug:last-child').position().left +
                 $('#bugs_map'+ this.parentId +' .bug:last-child').width() +
-                30;
+                bugsMargin;
             this.y = 0;
 
             // New row bugs set
@@ -135,10 +188,10 @@ function Bug(name) {
                 bugs_map[this.parentId-1] = new BugsMap(
                     'bugs_map' + this.parentId,
                     bugsX,
-                    $('.bugs_map:last-child').position().top + $('#bugs_map'+ (this.parentId-1) +' .bug:last-child').height() + 30,
-                    // Используем скорость как задержку интервала для перемещения врага на 1 пиксель
-                    bugsSpeedX,
-                    bugsSpeedY
+                    $('.bugs_map:last-child').position().top + $('#bugs_map'+ (this.parentId-1) +' .bug:last-child').height() + bugsMargin,
+                    // Увеличим скорость на 50% при переходе на новый уровень
+                    bugsSpeedX / ((level + 1)/2),
+                    bugsSpeedY / ((level + 1)/2)
                 );
                 this.x = 0;
             }
@@ -152,8 +205,8 @@ function Bug(name) {
 
         this.width  = $('#' + this.name).width();
         this.height = $('#' + this.name).height();
-        bugs_map[this.parentId-1].height = this.height;
-        bugs_map[this.parentId-1].width  += this.width  + 30;
+        bugs_map[this.parentId - 1].height = this.height;
+        bugs_map[this.parentId - 1].width  += this.width  + bugsMargin;
     }
 
     this.add();
@@ -229,12 +282,37 @@ function Shell(name, x, y, speedX, speedY) {
         $('#' + this.name).animate({
             top: 0,
         },
-        this.speedY * $('#screen').height(),
-        'linear',
-        function() {
-            unit.stop();
-            $(this).remove();
+        {
+            duration: this.speedY * $('#screen').height(),
+            easing: 'linear',
+            step: function(currentLeft) {
+                unit.check();
+            },
+            complete: function() {
+                unit.stop();
+                $(this).remove();
+            }
         });
+    }
+
+    this.check = function() {
+        var target = $(document.elementFromPoint($('#' + this.name).offset().left - 1, $('#' + this.name).offset().top - 1));
+        if (target.attr('class') == 'bug') {
+            var i = target.attr('id').replace('bug', '');
+            // Удалить пустой слой
+            if ($('#bugs_map' + bugs[i].parentId + ' .bug').length - 1 == 0) {
+                bugs_map[bugs[i].parentId - 1].destroy();
+            }
+            bugs[i].destroy();
+            this.destroy();
+
+            // All bugs destroyed - Level Up & start new game
+            if (!$('.bugs_map').length) {
+                level++;
+                initGame();
+                gameStart();
+            }
+        }
     }
 }
 Shell.prototype = new Unit();
@@ -248,8 +326,9 @@ function initGame() {
         'bugs_map1',
         bugsX,
         bugsY,
-        bugsSpeedX,
-        bugsSpeedY
+        // Увеличим скорость на 50% при переходе на новый уровень
+        bugsSpeedX / ((level + 1)/2),
+        bugsSpeedY / ((level + 1)/2)
     );
 
     // Добавить отряд врагов
@@ -260,7 +339,7 @@ function initGame() {
 
 // Старт игры - включить движение противника
 function gameStart() {
-    for(var i = 0; i <= bugs_map.length -1; i++) {
+    for(var i = 0; i <= bugs_map.length - 1; i++) {
         bugs_map[i].moveLeft();
         bugs_map[i].moveDown();
     }
@@ -268,7 +347,11 @@ function gameStart() {
 
 // Проигрыш
 function gameOver() {
-    alert("Game over!!!");
+    level = 1;
+
+    $('#start').addClass('gameover');
+    $('#start').show();
+
     for (var i = 1; i <= total_bugs; i++) {
         bugs[i].destroy();
     }
@@ -276,10 +359,7 @@ function gameOver() {
     for(var i = 0; i <= bugs_map.length -1; i++) {
         bugs_map[i].destroy();
     }
-
-    bugsSpeedX = 1000/($('#screen').width()*0.05);
-    bugsSpeedY = 1000/($('#screen').width()*0.005);
-    clearInterval(checkInt);
+    ship.destroy();
 }
 
 // Проверить цель на попадание или штраф
@@ -297,37 +377,10 @@ function check() {
 
             // All bugs destroyed - Level Up & start new game
             if (!$('.bugs_map').length) {
-                bugsSpeedX -= 0.5*bugsSpeedX;
-                bugsSpeedY -= 0.5*bugsSpeedY;
-
+                level++;
                 initGame();
                 gameStart();
             }
-        }
-    });
-
-    $('#ship').each(function(){
-        // Ship left top edge
-        var target1 = $(document.elementFromPoint($(this).offset().left + 1, $(this).offset().top - 1));
-        // Ship left bottom edge
-        var target2 = $(document.elementFromPoint($(this).offset().left + 1, $(this).offset().top + $(this).height() - 1));
-        // Ship right bottom edge
-        var target3 = $(document.elementFromPoint($(this).offset().left + $(this).width() - 1, $(this).offset().top + $(this).height() - 1));
-        // Ship right top edge
-        var target4 = $(document.elementFromPoint($(this).offset().left + $(this).width() - 1, $(this).offset().top + 1));
-        if (target1.attr('class') == 'bug' ||
-            target2.attr('class') == 'bug' ||
-            target3.attr('class') == 'bug' ||
-            target4.attr('class') == 'bug'
-        ) {
-            gameOver();
-        }
-    });
-
-    // Проигрыш - противник достиг нижнего края
-    $('.bugs_map').each(function(){
-        if($(this).position().top == $('#screen').height()) {
-            gameOver();
         }
     });
 };
@@ -335,70 +388,75 @@ function check() {
 // Init game
 (function($){
     $(document).ready(function() {
-        // Добавить корабль в космос
-        ship = new Ship(
-            'ship',
-            $('#screen').width()/2 - 15,
-            $('#screen').height() - 50,
-            1000/($('#screen').width()*0.2)
-        );
+        $('#start').bind('click', function(){
+            $(this).hide();
 
-        initGame();
+            // Добавить корабль в космос
+            ship = new Ship(
+                'ship',
+                $('#screen').width()/2 - 15,
+                $('#screen').height() - 30,
+                1000/($('#screen').width()*0.2)
+            );
 
-        // TODO: добавить диалог для начала игры
-        gameStart();
-        checkInt = setInterval('check()', 5);
+            initGame();
 
-        $(document).on('keydown', function(e){
-            switch (e.which) {
-                case 37:
-                    // Move ship to the left
-                    if (ship.stoped) {
-                        ship.moveLeft();
-                    }
-                    break;
+            // TODO: добавить диалог для начала игры
+            gameStart();
 
-                case 39:
-                    // Move ship to the right
-                    if (ship.stoped) {
-                        ship.moveRight();
-                    }
-                    break;
+            $(document).on('keydown', function(e){
+                switch (e.which) {
+                    case 37:
+                        // Move ship to the left
+                        if (ship.stoped) {
+                            ship.moveLeft();
+                        }
+                        break;
 
-                case 32:
-                    // Shoot
-                    if (!$('.shell').length) {
-                        shell = new Shell(
-                            'shell',
-                            ship.getX() + 15,
-                            ship.getY(),
-                            0,
-                            1000/($('#screen').height()*1)
-                        );
-                        shell.moveUp();
-                    }
-                    break;
+                    case 39:
+                        // Move ship to the right
+                        if (ship.stoped) {
+                            ship.moveRight();
+                        }
+                        break;
 
-                default:
-                    break;
-            }
-        });
+                    case 32:
+                        // Shoot
+                        if (!$('.shell').length) {
+                            shell = new Shell(
+                                'shell',
+                                ship.getX() + 15,
+                                ship.getY(),
+                                0,
+                                shellSpeed
+                            );
+                            shell.moveUp();
+                        }
+                        break;
 
-        $(document).on('keyup', function(e){
-            switch (e.which) {
-                case 37:
-                    ship.stop();
-                    $('#ship').stop();
-                    break;
+                    default:
+                        break;
+                }
+            });
 
-                case 39:
-                    ship.stop();
-                    $('#ship').stop();
-                    break;
+            $(document).on('keyup', function(e){
+                switch (e.which) {
+                    case 37:
+                        ship.stop();
+                        $('#ship').stop();
+                        break;
 
-                default:
-                    break;
-            }
+                    case 39:
+                        ship.stop();
+                        $('#ship').stop();
+                        break;
+
+                    default:
+                        break;
+                }
+            });
+
+            return false;
         });
     });
 })(jQuery);
