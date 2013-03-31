@@ -1,0 +1,41 @@
+body {
+    text-align: center;
+}
+
+#screen {
+    position: absolute;
+    left: 50%;
+    bottom: 50px;
+    overflow: hidden;
+    margin-left: -400px;
+    width: 800px;
+    height: 600px;
+    background: #000;
+}
+
+#ship {
+    width: 30px;
+    height: 30px;
+    position: absolute;
+    background: #fff;
+    border: 1px solid #ccc;
+}
+
+.bug {
+    width: 30px;
+    height: 30px;
+    position: absolute;
+    background: #fff;
+    border: 1px solid #ccc;
+}
+
+.bugs_map {
+    position: absolute;
+}
+
+.shell {
+    position: absolute;
+    width: 1px;
+    height: 10px;
+    background: yellow;
+}
