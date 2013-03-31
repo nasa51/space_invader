@@ -13,6 +13,7 @@ var shell;
 
 // Object
 function Unit(name, x, y, speedX, speedY) {
+    this.type = 'unit';
     this.name = name;
     this.x = x;
     this.y = y;
@@ -53,6 +54,7 @@ function Unit(name, x, y, speedX, speedY) {
 
 // Bug Map object
 function BugsMap(name, x, y, speedX, speedY, bugs) {
+    this.type = 'bugs_map';
     this.name = name;
     this.x = x;
     this.y = y;
@@ -65,34 +67,9 @@ function BugsMap(name, x, y, speedX, speedY, bugs) {
 
     $('#' + this.name).addClass('bugs_map');
 
-    // Move unit
-    this.move = function(dx, dy) {
-        this.x += dx * this.direction;
-        this.y += dy;
-        if (this.x == $('#screen').width() - this.width - 30) {
-            this.direction = -1;
-        }
-        if (this.x == 30) {
-            this.direction = 1;
-        }
-        if (this.y + this.height == $('#screen').height() &&
-            $('#' + this.name + ' .bug').length
-        ) {
-            gameOver();
-        }
-        $('#' + this.name).css({
-            left: this.x + 'px',
-            top:  this.y + 'px'
-        });
-        this.stoped = false;
-    };
-
     // Move bugs row to the left border
     this.moveLeft = function() {
-        if (!$('#' + this.name).length) {
-            return;
-        }
-        var bugs_map = this;
+        var unit = this;
         this.stoped = false;
         $('#'+ this.name).animate({
             left: '0px'
@@ -100,18 +77,15 @@ function BugsMap(name, x, y, speedX, speedY, bugs) {
         speedX * $('#' + this.name).position().left,
         'linear',
         function(){
-            bugs_map.stop();
-            bugs_map.moveRight();
-            bugs_map.moveDown();
+            unit.stop();
+            unit.moveRight();
+            unit.moveDown();
         });
     }
 
     // Move bugs row to the right border
     this.moveRight = function() {
-        if (!$('#' + this.name).length) {
-            return;
-        }
-        var bugs_map = this;
+        var unit = this;
         this.stoped = false;
         $('#'+ this.name).animate({
             left: $('#screen').width() - this.width + 'px'
@@ -119,32 +93,27 @@ function BugsMap(name, x, y, speedX, speedY, bugs) {
         speedX * ($('#screen').width() - $('#' + this.name).position().left - this.width),
         'linear',
         function(){
-            bugs_map.stop();
-            bugs_map.moveLeft();
-            bugs_map.moveDown();
+            unit.stop();
+            unit.moveLeft();
+            unit.moveDown();
         });
     }
 
     // Move bugs row to the bottom border
     this.moveDown = function() {
-        if (!$('#' + this.name).length) {
-            return;
-        }
-        var bugs_map = this;
+        var unit = this;
         $('#'+ this.name).animate({
             top: $('#screen').height()
         },
         speedY * ($('#screen').height() - $('#' + this.name).position().top - this.height),
-        'linear',
-        function(){
-            ship.stop();
-        });
+        'linear');
     }
 }
 BugsMap.prototype = new Unit();
 
 // Bug object
 function Bug(name) {
+    this.type = 'bug';
     this.name = name;
     this.x = 0;
     this.y = 0;
@@ -204,6 +173,7 @@ Bug.prototype = new Unit();
 
 // Ship object
 function Ship(name, x, y, speedX) {
+    this.type = 'ship';
     this.name = name;
     this.x = x;
     this.y = y;
@@ -213,7 +183,7 @@ function Ship(name, x, y, speedX) {
 
     // Move ship to the left border
     this.moveLeft = function() {
-        var ship = this;
+        var unit = this;
         this.stoped = false;
         $('#'+ this.name).animate({
             left: '0px'
@@ -221,13 +191,13 @@ function Ship(name, x, y, speedX) {
         speedX * $('#' + this.name).position().left,
         'linear',
         function(){
-            ship.stop();
+            unit.stop();
         });
     }
 
     // Move ship to the right border
     this.moveRight = function() {
-        var ship = this;
+        var unit = this;
         this.stoped = false;
         $('#'+ this.name).animate({
             left: $('#screen').width() - this.width + 'px'
@@ -235,7 +205,7 @@ function Ship(name, x, y, speedX) {
         speedX * ($('#screen').width() - $('#' + this.name).position().left),
         'linear',
         function(){
-            ship.stop();
+            unit.stop();
         });
     }
 }
@@ -243,6 +213,7 @@ Ship.prototype = new Unit();
 
 // Shell object
 function Shell(name, x, y, speedX, speedY) {
+    this.type = 'shell';
     this.name = name;
     this.x = x;
     this.y = y;
@@ -254,20 +225,21 @@ function Shell(name, x, y, speedX, speedY) {
     $('#' + this.name).addClass('shell');
 
     this.moveUp = function() {
-        var shell = this;
+        var unit = this;
         $('#' + this.name).animate({
             top: 0,
         },
         this.speedY * $('#screen').height(),
         'linear',
         function() {
-            shell.stop();
+            unit.stop();
             $(this).remove();
         });
     }
 }
 Shell.prototype = new Unit();
 
+// Инициалищация новой игры - добавление противников
 function initGame() {
     bugs_map = new Array();
     bugs     = new Array();
@@ -286,15 +258,15 @@ function initGame() {
     }
 }
 
+// Старт игры - включить движение противника
 function gameStart() {
     for(var i = 0; i <= bugs_map.length -1; i++) {
         bugs_map[i].moveLeft();
         bugs_map[i].moveDown();
-        // bugs_map[i].moveIdX = setInterval('bugs_map['+ i +'].move(1,0)', bugs_map[i].speedX);
-        // bugs_map[i].moveIdY = setInterval('bugs_map['+ i +'].move(0,1)', bugs_map[i].speedY);
     }
 }
 
+// Проигрыш
 function gameOver() {
     alert("Game over!!!");
     for (var i = 1; i <= total_bugs; i++) {
@@ -313,29 +285,42 @@ function gameOver() {
 // Проверить цель на попадание или штраф
 function check() {
     $('.shell').each(function(){
-        // Проверка на наличие протиника с координатами пули
-        // TODO: облегчить выборку цели
-        for (var i = 1; i < bugs.length; i++) {
-            if ($('#' + bugs[i].name).length &&
-                bugs[i].getX() <= $(this).position().left && $(this).position().left <= bugs[i].getX() + bugs[i].width &&
-                bugs[i].getY() <= $(this).position().top  && $(this).position().top  <= bugs[i].getY() + bugs[i].width
-            ) {
-                if ($('#bugs_map' + bugs[i].parentId + ' .bug').length - 1 == 0) {
-                    bugs_map[bugs[i].parentId - 1].destroy();
-                }
-                bugs[i].destroy();
-                shell.destroy();
-
-                // All bugs destroyed - Level Up & start new game
-                if (!$('.bugs_map').length) {
-                    bugsSpeedX -= 0.5*bugsSpeedX;
-                    bugsSpeedY -= 0.5*bugsSpeedY;
-
-                    initGame();
-                    gameStart();
-                }
-                break;
+        var target = $(document.elementFromPoint($(this).offset().left - 1, $(this).offset().top - 1));
+        if (target.attr('class') == 'bug') {
+            var i = target.attr('id').replace('bug', '');
+            // Удалить пустой слой
+            if ($('#bugs_map' + bugs[i].parentId + ' .bug').length - 1 == 0) {
+                bugs_map[bugs[i].parentId - 1].destroy();
             }
+            bugs[i].destroy();
+            shell.destroy();
+
+            // All bugs destroyed - Level Up & start new game
+            if (!$('.bugs_map').length) {
+                bugsSpeedX -= 0.5*bugsSpeedX;
+                bugsSpeedY -= 0.5*bugsSpeedY;
+
+                initGame();
+                gameStart();
+            }
+        }
+    });
+
+    $('#ship').each(function(){
+        // Ship left top edge
+        var target1 = $(document.elementFromPoint($(this).offset().left + 1, $(this).offset().top - 1));
+        // Ship left bottom edge
+        var target2 = $(document.elementFromPoint($(this).offset().left + 1, $(this).offset().top + $(this).height() - 1));
+        // Ship right bottom edge
+        var target3 = $(document.elementFromPoint($(this).offset().left + $(this).width() - 1, $(this).offset().top + $(this).height() - 1));
+        // Ship right top edge
+        var target4 = $(document.elementFromPoint($(this).offset().left + $(this).width() - 1, $(this).offset().top + 1));
+        if (target1.attr('class') == 'bug' ||
+            target2.attr('class') == 'bug' ||
+            target3.attr('class') == 'bug' ||
+            target4.attr('class') == 'bug'
+        ) {
+            gameOver();
         }
     });
 
@@ -344,12 +329,11 @@ function check() {
         if($(this).position().top == $('#screen').height()) {
             gameOver();
         }
-    })
+    });
 };
 
 // Init game
 (function($){
-
     $(document).ready(function() {
         // Добавить корабль в космос
         ship = new Ship(
@@ -363,11 +347,7 @@ function check() {
 
         // TODO: добавить диалог для начала игры
         gameStart();
-        checkInt = setInterval('check()', 1);
-
-        var test = new Array();
-        test[0] = 'key 1';
-        test[1] = 'key 2';
+        checkInt = setInterval('check()', 5);
 
         $(document).on('keydown', function(e){
             switch (e.which) {
@@ -375,7 +355,6 @@ function check() {
                     // Move ship to the left
                     if (ship.stoped) {
                         ship.moveLeft();
-                        // ship.moveIdX = setInterval('ship.move(-1, 0)', ship.speedX);
                     }
                     break;
 
@@ -383,7 +362,6 @@ function check() {
                     // Move ship to the right
                     if (ship.stoped) {
                         ship.moveRight();
-                        // ship.moveIdX = setInterval('ship.move(1, 0)', ship.speedX);
                     }
                     break;
 
