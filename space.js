@@ -59,10 +59,26 @@ function Unit(name, x, y, speedX, speedY) {
         $('#' + this.name).stop();
     }
 
+    this.isset = function() {
+      return $('#' + this.name).length;
+    }
+
     this.destroy = function() {
-        this.stop();
+        switch (this.type) {
+            case 'bug':
+                $('#' + this.name).addClass('bang').fadeOut('fast', function(){
+                    $(this).stop();
+                    $(this).remove();
+                });
+                break;
+
+            default:
+                this.stop();
+                $('#' + this.name).remove();
+                break
+        }
+
         this.destroyed = true;
-        $('#' + this.name).remove();
     }
 }
 
@@ -83,6 +99,9 @@ function BugsMap(name, x, y, speedX, speedY, bugs) {
 
     // Move bugs row to the left border
     this.moveLeft = function() {
+        if (!this.isset()) {
+            return;
+        }
         var unit = this;
         this.stoped = false;
         $('#'+ this.name).animate({
@@ -103,6 +122,9 @@ function BugsMap(name, x, y, speedX, speedY, bugs) {
 
     // Move bugs row to the right border
     this.moveRight = function() {
+        if (!this.isset()) {
+            return;
+        }
         var unit = this;
         this.stoped = false;
         $('#'+ this.name).animate({
@@ -123,6 +145,9 @@ function BugsMap(name, x, y, speedX, speedY, bugs) {
 
     // Move bugs row to the bottom border
     this.moveDown = function() {
+        if (!this.isset()) {
+            return;
+        }
         var unit = this;
         $('#'+ this.name).animate({
             top: $('#screen').height()

@@ -11,6 +11,11 @@ body {
     width: 800px;
     height: 600px;
     background: #000;
+    background: -moz-radial-gradient   (center, ellipse cover, #333 0%, #000 70%);
+    background: -webkit-radial-gradient(center, ellipse cover, #333 0%, #000 70%);
+    background: -o-radial-gradient     (center, ellipse cover, #333 0%, #000 70%);
+    background: -ms-radial-gradient    (center, ellipse cover, #333 0%, #000 70%);
+    background: radial-gradient        (center, ellipse cover, #333 0%, #000 70%);
 }
 
 #start {
@@ -41,6 +46,13 @@ body {
     height: 22px;
     position: absolute;
     background: transparent url(images/invader_30.gif) center center no-repeat;
+    -webkit-transition: background .1s ease-in-out;
+       -moz-transition: background .1s ease-in-out;
+            transition: background .1s ease-in-out;
+}
+.bug.bang {
+    height: 29px;
+    background: transparent url(images/splash.png) center center no-repeat;
 }
 
 .bugs_map {
