@@ -3,11 +3,9 @@ body {
 }
 
 #screen {
-    position: absolute;
-    left: 50%;
-    bottom: 50px;
+    position: relative;
     overflow: hidden;
-    margin-left: -400px;
+    margin: 0 auto;
     width: 800px;
     height: 600px;
     background: #000;
@@ -40,6 +38,29 @@ body {
     position: absolute;
     background: transparent url(images/ship.png) center center no-repeat;
 }
+
+#copyright a {
+  position: relative;
+  top: 18px;
+}
+
+#gameplay {
+  clear: both;
+  font-size: 11px;
+  margin-top: 20px;
+}
+
+#level,
+#score {
+  width: 45%;
+  font-weight: bold;
+  font-size: 24px;
+  margin: 20px 10px;
+}
+
+#score { float: left; }
+
+#level { float: right; }
 
 .bug {
     width: 30px;

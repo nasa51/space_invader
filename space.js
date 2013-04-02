@@ -19,6 +19,9 @@ var BUGS_SPEED_Y  = ($('#screen').height()*0.005)/1000;    // Скорость �
 var SHELL_SPEED   = ($('#screen').height()*1)/1000;        // Скорость движения снаряда (высота экрана в секуду)
 var SHIP_SPEED    = ($('#screen').height()*0.2)/1000;        // Скорость движения корабля (20% ширины экрана в секуду)
 
+// Oчки
+var score = 0;
+
 
 // Родительский объект игры
 function Unit(name, x, y, speedX, speedY) {
@@ -274,6 +277,7 @@ function Ship(name, x, y, speedX) {
     this.stoped = true;
 
     this.add();
+    $('#score').text(score);
 
     // Движение корабля влево
     this.moveLeft = function() {
@@ -352,6 +356,9 @@ function Shell(name, x, y, speedX, speedY) {
             bugs[i].destroy();
             unit.destroy();
 
+            score += LEVEL;
+            $('#score').text('Score: ' + score);
+
             // Все жуки убиты - переход на новый уровень
             if (!$('.bugs_map').length) {
                 LEVEL++;
@@ -365,6 +372,7 @@ Shell.prototype = new Unit();
 
 // Инициализация новой игры - добавление противников
 function initGame() {
+    $('#level').text('Level: ' + level);
     bugs_map = new Array();
     bugs     = new Array();
 
@@ -394,6 +402,7 @@ function gameStart() {
 // Проигрыш
 function gameOver() {
     LEVEL = 1;
+    score = 0;
 
     // Показать обложку проигрыша
     $('#start').addClass('gameover');
