@@ -6,7 +6,7 @@ var shell    = new Object();
 
 var gameover      = false;
 
-var FPS           = 40;
+var FPS           = 13; // in milliseconds = 70 FPS
 var TOTAL_BUGS    = 25;
 var LEVEL         = 1;
 
