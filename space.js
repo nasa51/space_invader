@@ -682,7 +682,7 @@ function onError() {
                 }
             });
 
-            startWatch():
+            startWatch();
 
             return false;
         });
