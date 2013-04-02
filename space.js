@@ -131,6 +131,24 @@ function BugsMap(name, x, y, speedX, speedY, bugs) {
 
     $('#' + this.name).addClass('bugs_map');
 
+    // Старт движения жуков
+    this.start = function() {
+        var unit = this;
+        $('#'+ this.name).animate({
+            left: '+=1'
+        }, {
+            // Время движения ряда
+            duration:  1 / this.speedX,
+            easing: 'linear',
+            // Изменить направление в конце анимации
+            complete: function() {
+                $(this).stop();
+                unit.moveLeft();
+                unit.moveDown();
+            }
+        });
+    }
+
     // Движения ряда жуков влево
     this.moveLeft = function() {
         if (!this.isset()) {
@@ -145,7 +163,7 @@ function BugsMap(name, x, y, speedX, speedY, bugs) {
             duration:  $('#' + this.name).position().left / this.speedX,
             easing: 'linear',
             // Проверка достижения цели на каждо шагу анимации
-            step: function(currentLeft) {
+            step: function() {
                 unit.check();
             },
             // Изменить направление в конце анимации
@@ -171,7 +189,7 @@ function BugsMap(name, x, y, speedX, speedY, bugs) {
             duration:  ($('#screen').width() - $('#' + this.name).position().left - this.width) / this.speedX,
             easing: 'linear',
             // Проверка достижения цели на каждо шагу анимации
-            step: function(currentLeft) {
+            step: function() {
                 unit.check();
             },
             // Изменить направление в конце анимации
@@ -195,7 +213,7 @@ function BugsMap(name, x, y, speedX, speedY, bugs) {
             duration: ($('#screen').height() - $('#' + this.name).position().top - this.height) / this.speedY,
             easing: 'linear',
             // Проверка достижения цели на каждо шагу анимации
-            step: function(currentLeft) {
+            step: function() {
                 unit.check();
             }
         });
@@ -349,7 +367,7 @@ function Shell(name, x, y, speedX, speedY) {
             duration: $('#screen').height() / this.speedY,
             easing: 'linear',
             // Проверка на попадание на каждом шагу анимации
-            step: function(currentLeft) {
+            step: function() {
                 unit.check();
             },
             complete: function() {
@@ -399,8 +417,7 @@ function initGame() {
 // Старт игры - включить движение жуков
 function gameStart() {
     gameover = false;
-    bugs_map.moveLeft();
-    bugs_map.moveDown();
+    bugs_map.start();
 }
 
 // Проигрыш
