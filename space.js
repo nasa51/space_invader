@@ -4,20 +4,22 @@ var bugs         = new Array();
 var ship;
 var shell;
 
+var gameover     = false;
+
 var FPS           = 40;
-var TOTAL_BUGS    = 40;
+var TOTAL_BUGS    = 25;
 var LEVEL         = 1;
 
 // Начальные координаты жуков
 var BUGS_Y        = 40;
-var BUGS_X        = 100;
+var BUGS_X        = 240;
 var BUGS_MARGIN   = 30;
 
 // Задание скоростей (px/ms)
 var BUGS_SPEED_X  = ($('#screen').width()*0.05)/1000;      // Скорость движения жука по горизонтали (5% ширины экрана в секуду)
 var BUGS_SPEED_Y  = ($('#screen').height()*0.005)/1000;    // Скорость движения жука по вертикали (0.5% высоты экрана в секуду)
 var SHELL_SPEED   = ($('#screen').height()*1)/1000;        // Скорость движения снаряда (высота экрана в секуду)
-var SHIP_SPEED    = ($('#screen').height()*0.2)/1000;        // Скорость движения корабля (20% ширины экрана в секуду)
+var SHIP_SPEED    = ($('#screen').height()*0.2)/1000;      // Скорость движения корабля (20% ширины экрана в секуду)
 
 // Oчки
 var score = 0;
@@ -84,18 +86,32 @@ function Unit(name, x, y, speedX, speedY) {
 
     // Уничтожить объект
     this.destroy = function() {
-        switch (this.type) {
-            case 'bug':
-                $('#' + this.name).addClass('bang').fadeOut('fast', function(){
-                    $(this).stop();
-                    $(this).remove();
-                });
-                break;
+        if (!gameover){
+            // Эффект уничтожения жука
+            switch (this.type) {
+                case 'bug':
+                    $('#' + this.name).addClass('bang').fadeOut('fast', function(){
+                        $(this).stop();
+                        $(this).remove();
+                        // Все жуки убиты - переход на новый уровень
+                        if (!$('.bug').length) {
+                            bugs_map.destroy();
+                            LEVEL++;
+                            initGame();
+                            gameStart();
+                        }
+                    });
+                    break;
 
-            default:
-                this.stop();
-                $('#' + this.name).remove();
-                break
+                default:
+                    this.stop();
+                    $('#' + this.name).remove();
+                    break
+            }
+        } else {
+            // Удаление объектов после проигрыша
+            this.stop();
+            $('#' + this.name).remove();
         }
 
         this.destroyed = true;
@@ -113,9 +129,6 @@ function BugsMap(name, x, y, speedX, speedY, bugs) {
     this.direction = 1;
 
     this.add();
-
-    // начальная ширина ряда отрицательный отступ
-    this.width = -1 * BUGS_MARGIN;
 
     $('#' + this.name).addClass('bugs_map');
 
@@ -139,8 +152,8 @@ function BugsMap(name, x, y, speedX, speedY, bugs) {
             // Изменить направление в конце анимации
             complete: function() {
                 $(this).stop();
-                bugs_map[unit.name.replace('bugs_map','') - 1].moveRight();
-                bugs_map[unit.name.replace('bugs_map','') - 1].moveDown();
+                unit.moveRight();
+                unit.moveDown();
             }
         });
     }
@@ -165,8 +178,8 @@ function BugsMap(name, x, y, speedX, speedY, bugs) {
             // Изменить направление в конце анимации
             complete: function() {
                 $(this).stop();
-                bugs_map[unit.name.replace('bugs_map','') - 1].moveLeft();
-                bugs_map[unit.name.replace('bugs_map','') - 1].moveDown();
+                unit.moveLeft();
+                unit.moveDown();
             }
         });
     }
@@ -212,35 +225,29 @@ function Bug(name) {
     this.name = name;
     this.x = 0;
     this.y = 0;
-    this.parentId = bugs_map.length;
 
     this.add = function() {
         // Определение новой позиции жука в родительском слое
         this.x = 0
-        if ($('#bugs_map'+ this.parentId +' .bug').length) {
+        if ($('#bugs_map .bug').length) {
             this.x =
-                $('#bugs_map'+ this.parentId +' .bug:last-child').position().left +
-                $('#bugs_map'+ this.parentId +' .bug:last-child').width() +
+                $('#bugs_map .bug:last-child').position().left +
+                $('#bugs_map .bug:last-child').width() +
                 BUGS_MARGIN;
-            this.y = 0;
+            this.y = $('#bugs_map .bug:last-child').position().top;
 
             // Создание нового ряда жуков
-            if (this.x + BUGS_X*2 + $('#bugs_map'+ this.parentId +' .bug:last-child').width() > $('#screen').width()) {
-                this.parentId += 1;
-                bugs_map[this.parentId-1] = new BugsMap(
-                    'bugs_map' + this.parentId,
-                    BUGS_X,
-                    $('.bugs_map:last-child').position().top + $('#bugs_map'+ (this.parentId-1) +' .bug:last-child').height() + BUGS_MARGIN,
-                    // Увеличим скорость на 50% при переходе на новый уровень
-                    BUGS_SPEED_X * ((LEVEL + 1)/2),
-                    BUGS_SPEED_Y * ((LEVEL + 1)/2)
-                );
+            if (this.x + BUGS_X*2 + $('#bugs_map .bug:last-child').width() > $('#screen').width()) {
                 this.x = 0;
+                this.y =
+                  $('#bugs_map .bug:last-child').position().top +
+                  $('#bugs_map .bug:last-child').height() +
+                  BUGS_MARGIN;
             }
         }
 
         // Добавить жука в ряд
-        $('#bugs_map' + this.parentId).append('<div id="'+this.name+'" class="bug" />');
+        $('#bugs_map').append('<div id="'+this.name+'" class="bug" />');
         $('#' + this.name).css({
             top:  this.y +'px',
             left: this.x + 'px'
@@ -248,9 +255,14 @@ function Bug(name) {
 
         this.width  = $('#' + this.name).width();
         this.height = $('#' + this.name).height();
+
         // Актуализировать размеры ряда жуквов
-        bugs_map[this.parentId - 1].height  = this.height;
-        bugs_map[this.parentId - 1].width  += this.width  + BUGS_MARGIN;
+        if (!bugs_map.height) {
+            var bugs_row = parseInt(($('#screen').width() - 2 * BUGS_X)/(this.width + BUGS_MARGIN));
+            bugs_map.width  = bugs_row * (this.width + BUGS_MARGIN) - BUGS_MARGIN;
+            bugs_map.height = Math.round(TOTAL_BUGS / bugs_row);
+        }
+
     }
 
     this.add();
@@ -258,11 +270,11 @@ function Bug(name) {
     // Координаты жука в ряду
     this.getX = function() {
         return $('#' + this.name).position().left +
-            $('#bugs_map' + this.parentId).position().left;
+            $('#bugs_map').position().left;
     }
     this.getY = function() {
         return $('#' + this.name).position().top +
-            $('#bugs_map' + this.parentId).position().top;
+            $('#bugs_map').position().top;
     }
 }
 Bug.prototype = new Unit();
@@ -281,6 +293,9 @@ function Ship(name, x, y, speedX) {
 
     // Движение корабля влево
     this.moveLeft = function() {
+        if (!this.isset()) {
+            return;
+        }
         var unit = this;
         this.stoped = false;
         $('#'+ this.name).animate({
@@ -296,6 +311,9 @@ function Ship(name, x, y, speedX) {
 
     // Движение корабля вправо
     this.moveRight = function() {
+        if (!this.isset()) {
+            return;
+        }
         var unit = this;
         this.stoped = false;
         $('#'+ this.name).animate({
@@ -348,23 +366,12 @@ function Shell(name, x, y, speedX, speedY) {
         // Проверить наличие противника в зоне поражения снаряда
         $('#'  + unit.name).collision('.bug').each(function() {
             var i = $(this).attr('id').replace('bug', '');
-            // Удалить пустой ряд
-            if ($('#bugs_map' + bugs[i].parentId + ' .bug').length - 1 == 0) {
-                bugs_map[bugs[i].parentId - 1].destroy();
-            }
-
             bugs[i].destroy();
             unit.destroy();
 
             score += LEVEL;
             $('#score').text('Score: ' + score);
 
-            // Все жуки убиты - переход на новый уровень
-            if (!$('.bugs_map').length) {
-                LEVEL++;
-                initGame();
-                gameStart();
-            }
         });
     }
 }
@@ -373,11 +380,10 @@ Shell.prototype = new Unit();
 // Инициализация новой игры - добавление противников
 function initGame() {
     $('#level').text('Level: ' + LEVEL);
-    bugs_map = new Array();
     bugs     = new Array();
 
-    bugs_map[0] = new BugsMap(
-        'bugs_map1',
+    bugs_map = new BugsMap(
+        'bugs_map',
         BUGS_X,
         BUGS_Y,
         // Увеличим скорость на 50% при переходе на новый уровень
@@ -393,14 +399,14 @@ function initGame() {
 
 // Старт игры - включить движение жуков
 function gameStart() {
-    for(var i = 0; i <= bugs_map.length - 1; i++) {
-        bugs_map[i].moveLeft();
-        bugs_map[i].moveDown();
-    }
+    gameover = false;
+    bugs_map.moveLeft();
+    bugs_map.moveDown();
 }
 
 // Проигрыш
 function gameOver() {
+    gameover = true;
     LEVEL = 1;
     score = 0;
 
@@ -408,13 +414,11 @@ function gameOver() {
     $('#start').addClass('gameover');
     $('#start').show();
 
-    // удалить все объект с экрана
+    // удалить все объекты с экрана
     for (var i = 1; i <= TOTAL_BUGS; i++) {
         bugs[i].destroy();
     }
-    for(var i = 0; i <= bugs_map.length -1; i++) {
-        bugs_map[i].destroy();
-    }
+    bugs_map.destroy();
     ship.destroy();
 }
 
@@ -443,7 +447,7 @@ function gameOver() {
                 switch (e.which) {
                     case 37:
                         // Движение корабля влево
-                        // если корабль не движеться
+                        // если корабль не движется
                         if (ship.stoped) {
                             ship.moveLeft();
                         }
@@ -451,7 +455,7 @@ function gameOver() {
 
                     case 39:
                         // Движение корабля вправо
-                        // если корабль не движеться
+                        // если корабль не движется
                         if (ship.stoped) {
                             ship.moveRight();
                         }
@@ -469,6 +473,7 @@ function gameOver() {
                             );
                             shell.moveUp();
                         }
+                        return false;
                         break;
 
                     default:
