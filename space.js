@@ -24,7 +24,6 @@ var SHIP_SPEED    = ($('#screen').height()*0.2)/1000;      // Скорость �
 // Oчки
 var score = 0;
 
-
 // Родительский объект игры
 function Unit(name, x, y, speedX, speedY) {
     this.type = 'unit';
