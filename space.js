@@ -277,7 +277,7 @@ function Ship(name, x, y, speedX) {
     this.stoped = true;
 
     this.add();
-    $('#score').text(score);
+    $('#score').text('Score: ' + score);
 
     // Движение корабля влево
     this.moveLeft = function() {
@@ -372,7 +372,7 @@ Shell.prototype = new Unit();
 
 // Инициализация новой игры - добавление противников
 function initGame() {
-    $('#level').text('Level: ' + level);
+    $('#level').text('Level: ' + LEVEL);
     bugs_map = new Array();
     bugs     = new Array();
 
