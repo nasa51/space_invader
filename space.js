@@ -1,10 +1,10 @@
 // Переменные для хранения объектов игры
-var bugs_map     = new Array();
-var bugs         = new Array();
-var ship;
-var shell;
+var bugs_map = new Object();
+var bugs     = new Array();
+var ship     = new Object();
+var shell    = new Object();
 
-var gameover     = false;
+var gameover      = false;
 
 var FPS           = 40;
 var TOTAL_BUGS    = 25;
@@ -24,7 +24,17 @@ var SHIP_SPEED    = ($('#screen').height()*0.2)/1000;      // Скорость �
 // Oчки
 var score = 0;
 
-// Родительский объект игры
+/**
+ * Создает экземпляр Unit.
+ *
+ * @constructor
+ * @this {Unit}
+ * @param {string} name   Имя элемента.
+ * @param {number} x      Координата X.
+ * @param {number} y      Координата Y.
+ * @param {number} speedX Скорость движения по оси X.
+ * @param {number} speedY Скорость движения по оси Y.
+ */
 function Unit(name, x, y, speedX, speedY) {
     this.type = 'unit';
     this.name = name;
@@ -35,7 +45,11 @@ function Unit(name, x, y, speedX, speedY) {
     this.destroyed = false;
     this.stoped = true;
 
-    // Добавить объект в игру
+    /**
+     * Добавить объект в игру
+     *
+     * @this {Unit}
+     */
     this.add = function() {
         $('#screen').append('<div id="'+this.name+'" />');
         $('#' + this.name).css({
@@ -46,7 +60,11 @@ function Unit(name, x, y, speedX, speedY) {
         this.height = $('#' + this.name).height();
     };
 
-    // Текущая координата объекта по горизонтали
+    /**
+     * Текущая координата объекта по горизонтали
+     *
+     * @this {Unit}
+     */
     this.getX = function() {
         return $('#' + this.name).position().left;
     }
@@ -56,34 +74,62 @@ function Unit(name, x, y, speedX, speedY) {
         return $('#' + this.name).position().top;
     }
 
-    // Движение объекта влево
+    /**
+     * Движение объекта влево
+     *
+     * @this {Unit}
+     */
     this.moveLeft = function() {
     }
 
-    // Движение объекта вправо
+    /**
+     * Движение объекта вправо
+     *
+     * @this {Unit}
+     */
     this.moveRight = function() {
     }
 
-    // Движение объекта вверх
+    /**
+     * Движение объекта вверх
+     *
+     * @this {Unit}
+     */
     this.moveUp = function() {
     }
 
-    // Движение объекта вниз
+    /**
+     * Движение объекта вниз
+     *
+     * @this {Unit}
+     */
     this.moveDown = function() {
     }
 
-    // Остановка движения объекта
+    /**
+     * Остановка движения объекта
+     *
+     * @this {Unit}
+     */
     this.stop = function () {
         this.stoped  = true;
         $('#' + this.name).stop();
     }
 
-    // Проверка на существование
+    /**
+     * Проверка на существование
+     *
+     * @this {Unit}
+     */
     this.isset = function() {
       return $('#' + this.name).length;
     }
 
-    // Уничтожить объект
+    /**
+     * Уничтожить объект
+     *
+     * @this {Unit}
+     */
     this.destroy = function() {
         if (!gameover){
             // Эффект уничтожения жука
@@ -117,21 +163,36 @@ function Unit(name, x, y, speedX, speedY) {
     }
 }
 
-// Ряд жуков (чтобы можно было задать разные направления движения рядов)
-function BugsMap(name, x, y, speedX, speedY, bugs) {
+/**
+ * Создает экземпляр BugsMap.
+ * Ряд жуков (чтобы можно было задать разные направления движения рядов)
+ *
+ * @constructor
+ * @see   {Unit}
+ * @this  {BugsMap}
+ * @param {string} name   Имя элемента.
+ * @param {number} x      Координата X.
+ * @param {number} y      Координата Y.
+ * @param {number} speedX Скорость движения по оси X.
+ * @param {number} speedY Скорость движения по оси Y.
+ */
+function BugsMap(name, x, y, speedX, speedY) {
     this.type = 'bugs_map';
     this.name = name;
     this.x = x;
     this.y = y;
     this.speedX = speedX;
     this.speedY = speedY;
-    this.direction = 1;
 
     this.add();
 
     $('#' + this.name).addClass('bugs_map');
 
-    // Старт движения жуков
+    /**
+     * Старт движения жуков
+     *
+     * @this {BugsMap}
+     */
     this.start = function() {
         var unit = this;
         $('#'+ this.name).animate({
@@ -149,7 +210,11 @@ function BugsMap(name, x, y, speedX, speedY, bugs) {
         });
     }
 
-    // Движения ряда жуков влево
+    /**
+     * Движения ряда жуков влево
+     *
+     * @this {BugsMap}
+     */
     this.moveLeft = function() {
         if (!this.isset()) {
             return;
@@ -175,7 +240,11 @@ function BugsMap(name, x, y, speedX, speedY, bugs) {
         });
     }
 
-    // Move bugs row to the right border
+    /**
+     * Движения ряда жуков вправо
+     *
+     * @this {BugsMap}
+     */
     this.moveRight = function() {
         if (!this.isset()) {
             return;
@@ -201,7 +270,11 @@ function BugsMap(name, x, y, speedX, speedY, bugs) {
         });
     }
 
-    // Движение ряда вниз
+    /**
+     * Движение ряда вниз
+     *
+     * @this {BugsMap}
+     */
     this.moveDown = function() {
         if (!this.isset()) {
             return;
@@ -219,6 +292,11 @@ function BugsMap(name, x, y, speedX, speedY, bugs) {
         });
     }
 
+    /**
+     * Проверка на проигрыш
+     *
+     * @this {BugsMap}
+     */
     this.check = function() {
         var unit = this;
         // Проигрыш - жук попал по кораблю
@@ -236,13 +314,25 @@ function BugsMap(name, x, y, speedX, speedY, bugs) {
 }
 BugsMap.prototype = new Unit();
 
-// Объект Жук
+/**
+ * Создает экземпляр Bugs.
+ *
+ * @constructor
+ * @see   {Unit}
+ * @this  {Bug}
+ * @param {string} name Имя элемента.
+ */
 function Bug(name) {
     this.type = 'bug';
     this.name = name;
     this.x = 0;
     this.y = 0;
 
+    /**
+     * Добавление жуков в игру
+     *
+     * @this {Bug}
+     */
     this.add = function() {
         // Определение новой позиции жука в родительском слое
         this.x = 0
@@ -284,11 +374,23 @@ function Bug(name) {
 
     this.add();
 
-    // Координаты жука в ряду
+    /**
+     * Координата X жука в ряду
+     *
+     * @this {Bug}
+     * @return {number} текущая координата X.
+     */
     this.getX = function() {
         return $('#' + this.name).position().left +
             $('#bugs_map').position().left;
     }
+
+    /**
+     * Координата Y жука в ряду
+     *
+     * @this {Bug}
+     * @return {number} текущая координата Y.
+     */
     this.getY = function() {
         return $('#' + this.name).position().top +
             $('#bugs_map').position().top;
@@ -296,7 +398,17 @@ function Bug(name) {
 }
 Bug.prototype = new Unit();
 
-// Объект Корабль
+/**
+ * Создает экземпляр Ship.
+ *
+ * @constructor
+ * @see   {Unit}
+ * @this  {Ship}
+ * @param {string} name   Имя элемента.
+ * @param {number} x      Координата X.
+ * @param {number} y      Координата Y.
+ * @param {number} speedX Скорость движения по оси X.
+ */
 function Ship(name, x, y, speedX) {
     this.type = 'ship';
     this.name = name;
@@ -308,7 +420,11 @@ function Ship(name, x, y, speedX) {
     this.add();
     $('#score').text('Score: ' + score);
 
-    // Движение корабля влево
+    /**
+     * Движение корабля влево
+     *
+     * @this {Ship}
+     */
     this.moveLeft = function() {
         if (!this.isset()) {
             return;
@@ -326,7 +442,11 @@ function Ship(name, x, y, speedX) {
         });
     }
 
-    // Движение корабля вправо
+    /**
+     * Движение корабля вправо
+     *
+     * @this {Ship}
+     */
     this.moveRight = function() {
         if (!this.isset()) {
             return;
@@ -346,7 +466,18 @@ function Ship(name, x, y, speedX) {
 }
 Ship.prototype = new Unit();
 
-// Объект снаряд
+/**
+ * Создает экземпляр Shell.
+ *
+ * @constructor
+ * @see   {Unit}
+ * @this  {Shell}
+ * @param {string} name   Имя элемента.
+ * @param {number} x      Координата X.
+ * @param {number} y      Координата Y.
+ * @param {number} speedX Скорость движения по оси X.
+ * @param {number} speedY Скорость движения по оси Y.
+ */
 function Shell(name, x, y, speedX, speedY) {
     this.type = 'shell';
     this.name = name;
@@ -359,6 +490,11 @@ function Shell(name, x, y, speedX, speedY) {
 
     $('#' + this.name).addClass('shell');
 
+    /**
+     * Движение снаряда вверх
+     *
+     * @this {Shell}
+     */
     this.moveUp = function() {
         var unit = this;
         $('#' + this.name).animate({
@@ -377,7 +513,11 @@ function Shell(name, x, y, speedX, speedY) {
         });
     }
 
-    // Проверка на попaдание
+    /**
+     * Проверка на попaдание
+     *
+     * @this {Shell}
+     */
     this.check = function() {
         var unit = this;
         // Проверить наличие противника в зоне поражения снаряда
@@ -394,7 +534,9 @@ function Shell(name, x, y, speedX, speedY) {
 }
 Shell.prototype = new Unit();
 
-// Инициализация новой игры - добавление противников
+/**
+ * Инициализация новой игры - добавление противников.
+ */
 function initGame() {
     $('#level').text('Level: ' + LEVEL);
     bugs     = new Array();
@@ -414,13 +556,17 @@ function initGame() {
     }
 }
 
-// Старт игры - включить движение жуков
+/**
+ * Старт игры - включить движение жуков.
+ */
 function gameStart() {
     gameover = false;
     bugs_map.start();
 }
 
-// Проигрыш
+/**
+ * Проигрыш.
+ */
 function gameOver() {
     gameover = true;
     LEVEL = 1;
