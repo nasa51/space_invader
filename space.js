@@ -3,6 +3,7 @@ var bugs_map = new Object();
 var bugs     = new Array();
 var ship     = new Object();
 var shell    = new Object();
+var watchID  = 0;
 
 var gameover      = false;
 
@@ -584,6 +585,28 @@ function gameOver() {
     ship.destroy();
 }
 
+
+// Start watching the acceleration
+function startWatch() {
+  // Update acceleration every FPS ms
+  var options = {frequency: FPS};
+
+  watchID = navigator.accelerometer.watchAcceleration(onSuccess, onError, options);
+}
+
+function onSuccess(acceleration) {
+  alert('Acceleration X: ' + acceleration.x + '\n' +
+      'Acceleration Y: ' + acceleration.y + '\n' +
+      'Acceleration Z: ' + acceleration.z + '\n' +
+      'Timestamp: '      + acceleration.timestamp + '\n');
+};
+
+function onError() {
+  alert('onError!');
+};
+
+
+
 (function($){
     // Задаём интервал анимации jQuery
     $.fx.interval = FPS;
@@ -658,6 +681,8 @@ function gameOver() {
                         break;
                 }
             });
+
+            startWatch():
 
             return false;
         });
